@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan-N-Go | Pay Now</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0c0f;
+      --surface:   #111418;
+      --border:    #1e2228;
+      --green:     #00e676;
+      --green-dim: #00e67615;
+      --text:      #e8eaed;
+      --muted:     #6b7280;
+      --yellow:    #242424;
+      --mono:      'Space Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 40px;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--green);
+      letter-spacing: 2px;
+    }
+    .back-btn {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    /* ── Amount card ── */
+    .amount-card {
+      width: 100%;
+      max-width: 440px;
+      margin-top: 28px;
+      background: var(--green-dim);
+      border: 1px solid #00e67630;
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .amount-label {
+      font-size: 12px;
+      color: var(--green);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: var(--mono);
+      margin-bottom: 4px;
+    }
+    .amount-value {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .amount-value span { font-size: 18px; color: var(--green); margin-right: 2px; }
+    .cart-pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    /* ── QR section ── */
+    .qr-section {
+      width: 100%;
+      max-width: 440px;
+      margin-top: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .qr-title {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: var(--mono);
+      margin-bottom: 20px;
+    }
+    .qr-wrapper {
+      display: inline-block;
+      background: #fff;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .qr-wrapper img {
+      width: 200px;
+      height: 200px;
+      display: block;
+    }
+    .qr-hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .upi-apps {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .upi-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-family: var(--mono);
+    }
+
+    /* ── Status section ── */
+    .status-bar {
+      width: 100%;
+      max-width: 440px;
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--yellow);
+      flex-shrink: 0;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+    .status-dot.paid { background: var(--green); animation: none; }
+    .status-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .status-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    /* ── Success overlay ── */
+    .success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0c0fee;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .success-overlay.show { display: flex; }
+    .success-icon {
+      font-size: 72px;
+      margin-bottom: 16px;
+      animation: pop 0.5s ease;
+    }
+    @keyframes pop {
+      0%   { transform: scale(0.5); opacity: 0; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .success-title {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--green);
+    }
+    .success-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .redirect-text {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── Txnid ── */
+    .txnid-row {
+      width: 100%;
+      max-width: 440px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+    .txnid-label { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+    .txnid-val   { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+    
+    .demo-pay-wrap {
+    width: 100%;
+    max-width: 440px;
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .demo-pay-btn {
+    width: 100%;
+    padding: 16px 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00e676, #00c853);
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 24px rgba(0, 230, 118, 0.18);
+  }
+
+  .demo-pay-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(0, 230, 118, 0.25);
+  }
+
+  .demo-pay-btn:active {
+    transform: translateY(0);
+  }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">⚡ Scan-N-Go</div>
+    <a class="back-btn" id="backLink" href="cart.html">← Back to cart</a>
+  </div>
+
+  <!-- Amount -->
+  <div class="amount-card">
+    <div>
+      <div class="amount-label">Amount Due</div>
+      <div class="amount-value"><span>₹</span><span id="amountDisplay">—</span></div>
+    </div>
+    <div class="cart-pill" id="cartPill">—</div>
+  </div>
+
+  <!-- QR Code -->
+  <div class="qr-section">
+    <div class="qr-title">Scan to Pay</div>
+    <div class="qr-wrapper">
+      <img id="qrImage" src="" alt="UPI QR Code"/>
+    </div>
+    <div class="qr-hint">Open any UPI app and scan this QR code</div>
+    <div class="upi-apps">
+      <span class="upi-badge">GPay</span>
+      <span class="upi-badge">PhonePe</span>
+      <span class="upi-badge">Paytm</span>
+      <span class="upi-badge">BHIM</span>
+    </div>
+  </div>
+
+  <div class="demo-pay-wrap">
+    <button class="demo-pay-btn" onclick="simulatePayment()">
+      ✅ I Have Paid
+    </button>
+  </div>
+
+  <!-- Txn ID -->
+  <div class="txnid-row">
+    <span class="txnid-label">TXN ID</span>
+    <span class="txnid-val" id="txnidDisplay">—</span>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-text">
+      <strong id="statusTitle">Waiting for payment...</strong>
+      <span id="statusSub">This page updates automatically</span>
+    </div>
+  </div>
+
+  <!-- Success overlay -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Payment Received!</div>
+    <div class="success-sub">Redirecting to exit pass...</div>
+    <div class="redirect-text" id="countdownText">Redirecting in 3s</div>
+  </div>
+
+<script src="/js/auth.js"></script>
+<script>
+  const BASE_URL = window.location.origin;
+
+  if (!window.Auth.requireAuth()) {
+    throw new Error("Unauthorized");
+  }
+
+  let cartId = null;
+  let paymentPollTimer = null;
+  let timerSyncInterval = null;
+  let countdownInterval = null;
+  let redirectTimer = null;
+  let serverRemainingMs = 0;
+  let isRedirecting = false;
+
+  function showToast(msg) {
+    let toast = document.getElementById("toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "toast";
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #ef4444;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        transition: transform 0.3s ease;
+        z-index: 999;
+      `;
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = msg;
+    toast.style.transform = "translateX(-50%) translateY(0)";
+    setTimeout(() => {
+      toast.style.transform = "translateX(-50%) translateY(80px)";
+    }, 3000);
+  }
+
+  function cleanupIntervals() {
+    if (paymentPollTimer) clearInterval(paymentPollTimer);
+    if (timerSyncInterval) clearInterval(timerSyncInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+    if (redirectTimer) clearInterval(redirectTimer);
+
+    paymentPollTimer = null;
+    timerSyncInterval = null;
+    countdownInterval = null;
+    redirectTimer = null;
+  }
+
+
+
+  function ensureTimerBar() {
+    if (document.getElementById("timerBar")) return;
+
+    const timerDiv = document.createElement("div");
+    timerDiv.id = "timerBar";
+    timerDiv.style.cssText = `
+      width: 100%;
+      max-width: 440px;
+      background: #111418;
+      border: 1px solid #1e2228;
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    `;
+    timerDiv.innerHTML = `
+      <span style="font-size:12px;color:#6b7280;font-family:'Space Mono',monospace;letter-spacing:1px;">
+        QR EXPIRES IN
+      </span>
+      <span id="timerDisplay" style="font-size:14px;color:#fbbf24;font-family:'Space Mono',monospace;font-weight:700;">
+        05:00
+      </span>
+    `;
+
+    const statusBar = document.querySelector(".status-bar");
+    statusBar.insertAdjacentElement("afterend", timerDiv);
+  }
+
+  function renderTimer(ms) {
+    ensureTimerBar();
+
+    const remaining = Math.max(0, ms);
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const display = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+
+    const el = document.getElementById("timerDisplay");
+    el.textContent = display;
+    el.style.color = remaining < 60000 ? "#ef4444" : "#fbbf24";
+  }
+
+  function setStatus(title, sub, paid = false) {
+    const dot = document.getElementById("statusDot");
+    const titleEl = document.getElementById("statusTitle");
+    const subEl = document.getElementById("statusSub");
+
+    titleEl.textContent = title;
+    subEl.textContent = sub;
+
+    if (paid) {
+      dot.classList.add("paid");
+    } else {
+      dot.classList.remove("paid");
+    }
+  }
+
+  function storePaymentState(data) {
+    localStorage.setItem("sng_qr", data.qr_base64);
+    localStorage.setItem("sng_txnid", data.txnid);
+    localStorage.setItem("sng_amount", data.amount);
+    localStorage.setItem("sng_cartid", cartId);
+  }
+
+  function updatePaymentUIFromStorage() {
+    const qr = localStorage.getItem("sng_qr");
+    const txnid = localStorage.getItem("sng_txnid");
+    const amount = localStorage.getItem("sng_amount");
+
+    if (!qr) {
+      window.location.href = `cart.html?cart_id=${cartId}`;
+      return;
+    }
+
+    document.getElementById("qrImage").src = qr;
+    document.getElementById("amountDisplay").textContent = amount || "—";
+    document.getElementById("cartPill").textContent = cartId;
+    document.getElementById("txnidDisplay").textContent = txnid || "—";
+  }
+
+  async function syncTimerFromServer() {
+    try {
+      const res = await fetch(`${BASE_URL}/cart/${cartId}/timer`, {
+        headers: window.Auth.getAuthHeaders(),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        return;
+      }
+
+      if (data.expired) {
+        cleanupIntervals();
+        redirectBackToCart("Payment time expired. Cart restored.");
+        return;
+      }
+
+      serverRemainingMs = data.ms ?? 0;
+      renderTimer(serverRemainingMs);
+
+      if (!countdownInterval) {
+        countdownInterval = setInterval(() => {
+          serverRemainingMs = Math.max(0, serverRemainingMs - 1000);
+          renderTimer(serverRemainingMs);
+        }, 1000);
+      }
+    } catch (err) {
+      console.log("Timer sync error:", err.message);
+    }
+  }
+
+  function redirectBackToCart(message) {
+    if (isRedirecting) return;
+    isRedirecting = true;
+
+    localStorage.removeItem("sng_qr");
+    localStorage.removeItem("sng_txnid");
+    localStorage.removeItem("sng_amount");
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: #0a0c0fee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    `;
+    overlay.innerHTML = `
+      <div style="font-size:52px;margin-bottom:16px;">⏰</div>
+      <div style="font-size:22px;font-weight:600;color:#ef4444;margin-bottom:8px;">Session Expired</div>
+      <div style="font-size:14px;color:#6b7280;margin-bottom:28px;text-align:center;padding:0 24px;">
+        ${message}
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:12px;color:#6b7280;" id="expireCountdown">
+        Redirecting in 3s
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    let count = 3;
+    redirectTimer = setInterval(() => {
+      count--;
+      document.getElementById("expireCountdown").textContent = `Redirecting in ${count}s`;
+
+      if (count <= 0) {
+        clearInterval(redirectTimer);
+        window.location.href = `cart.html?cart_id=${cartId}`;
+      }
+    }, 1000);
+  }
+
+  async function cancelCheckoutAndGoBack() {
+      try {
+    const billRes = await fetch(`${BASE_URL}/cart/get-bill/${cartId}`, {
+      headers: window.Auth.getAuthHeaders()
+    });
+    const billData = await billRes.json();
+
+    if (
+      billRes.ok &&
+      billData.success &&
+      (billData.data.status === "LOCKED" || billData.data.status === "PAYMENT_PENDING")
+    ) {
+      await fetch(`${BASE_URL}/cart/${cartId}/cancel-checkout`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json"
+        })
+      });
+    }
+  } catch (err) {
+    console.log("Cancel checkout check failed");
+}
+  }
+
+  async function pollPaymentStatus() {
+    try {
+      const res = await fetch(`${BASE_URL}/cart/get-bill/${cartId}`, {
+        headers: window.Auth.getAuthHeaders(),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        return;
+      }
+
+      const cart = data.data;
+
+      if (cart.paid && cart.exit_token) {
+        cleanupIntervals();
+        showSuccess(cart.exit_token);
+        return;
+      }
+
+      if (cart.status === "ACTIVE" && !cart.paid) {
+        cleanupIntervals();
+        redirectBackToCart("Payment time expired. Cart restored.");
+        return;
+      }
+    } catch (err) {
+      console.log("Poll error:", err.message);
+    }
+  }
+
+  async function refreshPaymentOrder(showMessage = false) {
+    try {
+      const res = await fetch(`${BASE_URL}/payment/refresh-order`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ cart_id: cartId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        if (showMessage) showToast(data.message || "Unable to refresh order");
+        return;
+      }
+
+      storePaymentState(data.data);
+      updatePaymentUIFromStorage();
+
+      if (showMessage) {
+        showToast("Payment QR refreshed");
+      }
+    } catch (err) {
+      if (showMessage) showToast("Unable to refresh QR");
+    }
+  }
+
+  async function simulatePayment() {
+    const btn = document.querySelector(".demo-pay-btn");
+    const originalText = btn.textContent;
+
+    try {
+      btn.disabled = true;
+      btn.textContent = "Processing demo payment...";
+
+      const res = await fetch(`${BASE_URL}/payment/simulate-success`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ cart_id: cartId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showToast(data.message || "Payment failed");
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+      }
+
+      showSuccess(data.data.exit_token);
+    } catch (err) {
+      showToast("Network error");
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
+  function showSuccess(exitToken) {
+  if (isRedirecting) return;
+  isRedirecting = true;
+
+  cleanupIntervals(); // VERY IMPORTANT
+
+  setStatus("Payment confirmed!", "Redirecting to your exit pass...", true);
+  document.getElementById("successOverlay").classList.add("show");
+
+  // Hard redirect fallback (guaranteed)
+  setTimeout(() => {
+    window.location.href = `exit.html?token=${encodeURIComponent(exitToken)}`;
+  }, 2500);
+
+  // Optional countdown UI (does not control redirect)
+  let count = 3;
+  const cd = document.getElementById("countdownText");
+
+  const uiTimer = setInterval(() => {
+    count--;
+    cd.textContent = `Redirecting in ${count}s`;
+
+    if (count <= 0) {
+      clearInterval(uiTimer);
+    }
+  }, 1000);
+}
+
+  window.addEventListener("beforeunload", cleanupIntervals);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      cleanupIntervals();
+    } else if (!isRedirecting && cartId) {
+      startPaymentWatchers();
+    }
+  });
+
+  function startPaymentWatchers() {
+    cleanupIntervals();
+    syncTimerFromServer();
+    pollPaymentStatus();
+    paymentPollTimer = setInterval(pollPaymentStatus, 4000);
+    timerSyncInterval = setInterval(syncTimerFromServer, 5000);
+  }
+
+  window.onload = async () => {
+    cartId =
+      new URLSearchParams(window.location.search).get("cart_id") ||
+      localStorage.getItem("sng_cartid");
+
+    if (!cartId) {
+      window.location.href = "cart.html";
+      return;
+    }
+
+    document.getElementById("backLink").href = `cart.html?cart_id=${cartId}`;
+    document.getElementById("backLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      await cancelCheckoutAndGoBack();
+    });
+    updatePaymentUIFromStorage();
+    setStatus("Waiting for payment...", "This page updates automatically");
+
+    const demoNote = document.createElement("div");
+    demoNote.style.cssText = `
+      width: 100%;
+      max-width: 440px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid #1e2228;
+      border-radius: 10px;
+      color: #6b7280;
+      font-size: 12px;
+      line-height: 1.6;
+      background: #111418;
+    `;
+    demoNote.innerHTML = `<strong style="color:#00e676;">Demo mode:</strong> the green button below is only for your project demo. Real payment flow should rely on the webhook.`;
+    const qrSection = document.querySelector(".qr-section");
+    qrSection.insertAdjacentElement("afterend", demoNote);
+
+    startPaymentWatchers();
+  };
+</script>
+</body>
+</html>

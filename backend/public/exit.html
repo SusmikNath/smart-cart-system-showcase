@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan-N-Go | Exit Pass</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- QR code generator (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0a0c0f;
+      --surface: #111418;
+      --border:  #1e2228;
+      --green:   #00e676;
+      --text:    #e8eaed;
+      --muted:   #6b7280;
+      --red:     #ef4444;
+      --mono:    'Space Mono', monospace;
+      --sans:    'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 40px;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--green);
+      letter-spacing: 2px;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      margin-top: 80px;
+      text-align: center;
+    }
+    .spinner-ring {
+      width: 44px; height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { font-size: 13px; color: var(--muted); font-family: var(--mono); letter-spacing: 1px; }
+
+    /* ── ALLOW state ── */
+    .allow-section {
+      display: none;
+      width: 100%;
+      max-width: 440px;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .status-banner {
+      width: 100%;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .status-banner.allow {
+      background: #00e67612;
+      border: 1px solid #00e67640;
+    }
+    .status-banner.deny {
+      background: #ef444412;
+      border: 1px solid #ef444440;
+    }
+    .status-icon { font-size: 32px; }
+    .status-label {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    .status-label.allow { color: var(--green); }
+    .status-label.deny  { color: var(--red);   }
+    .status-msg { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Pass card ── */
+    .pass-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .pass-title {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: var(--mono);
+      margin-bottom: 20px;
+    }
+
+    /* QR rendered by qrcodejs */
+    #exitQR {
+      display: inline-block;
+      background: #fff;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    #exitQR canvas, #exitQR img {
+      display: block !important;
+    }
+
+    .pass-hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── Info rows ── */
+    .info-grid {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key   { font-size: 12px; color: var(--muted); font-family: var(--mono); letter-spacing: 1px; }
+    .info-value { font-size: 13px; color: var(--text); font-weight: 500; }
+    .info-value.green { color: var(--green); font-family: var(--mono); }
+
+    /* ── Token string ── */
+    .token-box {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .token-label {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .token-value {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--green);
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    /* ── DENY state ── */
+    .deny-section {
+      display: none;
+      width: 100%;
+      max-width: 440px;
+      margin-top: 24px;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .deny-body {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .deny-icon { font-size: 52px; margin-bottom: 14px; }
+    .deny-title { font-size: 20px; font-weight: 600; color: var(--red); margin-bottom: 8px; }
+    .deny-msg   { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+    .retry-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      text-decoration: none;
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      transition: border-color 0.2s;
+    }
+    .retry-btn:hover { border-color: var(--green); color: var(--green); }
+
+    .action-row {
+      width: 100%;
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--sans);
+      transition: all 0.2s ease;
+    }
+
+    .action-btn.primary {
+      background: var(--green);
+      color: #000;
+    }
+
+    .action-btn.primary:hover {
+      background: #00ff84;
+      transform: translateY(-1px);
+    }
+
+    .action-btn.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .action-btn.secondary:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">⚡ Scan-N-Go</div>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;">EXIT PASS</span>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loadingSection">
+    <div class="spinner-ring"></div>
+    <p>Verifying payment...</p>
+  </div>
+
+  <!-- ALLOW section -->
+  <div class="allow-section" id="allowSection">
+
+    <div class="status-banner allow">
+      <span class="status-icon">✅</span>
+      <div>
+        <div class="status-label allow">GATE OPEN</div>
+        <div class="status-msg">Payment confirmed — you may exit</div>
+      </div>
+    </div>
+
+    <div class="pass-card">
+      <div class="pass-title">Show this QR at the exit gate</div>
+      <div id="exitQR"></div>
+      <div class="pass-hint">Gate scanner will read this QR and open automatically</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-row">
+        <span class="info-key">CART</span>
+        <span class="info-value green" id="infoCartId">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">MOBILE</span>
+        <span class="info-value" id="infoMobile">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">AMOUNT PAID</span>
+        <span class="info-value green" id="infoAmount">—</span>
+      </div>
+    </div>
+
+    <div class="token-box">
+      <div class="token-label">Exit Token</div>
+      <div class="token-value" id="tokenDisplay">—</div>
+    </div>
+    
+    <div class="action-row">
+      <button class="action-btn secondary" onclick="goBackShopping()">🛒 Want More Shopping</button>
+      <button class="action-btn primary" onclick="downloadInvoice()">📄 Download Invoice</button>
+    </div>
+  </div>
+
+  <!-- DENY section -->
+  <div class="deny-section" id="denySection">
+    <div class="status-banner deny">
+      <span class="status-icon">🚫</span>
+      <div>
+        <div class="status-label deny">ACCESS DENIED</div>
+        <div class="status-msg">Invalid or unverified token</div>
+      </div>
+    </div>
+    <div class="deny-body">
+      <div class="deny-icon">❌</div>
+      <div class="deny-title">Payment Not Verified</div>
+      <div class="deny-msg">This exit token is invalid or payment was not completed.<br>Please visit the help desk.</div>
+      <a class="retry-btn" href="cart.html">← Back to Cart</a>
+    </div>
+  </div>
+
+<script src="/js/auth.js"></script>
+<script>
+  const BASE_URL = window.location.origin;
+  let currentInvoiceId = null;
+  let currentToken = null;
+
+  window.onload = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (!token) {
+      showDeny();
+      return;
+    }
+
+    currentToken = token;
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/verify-exit/${encodeURIComponent(token)}`);
+      const data = await res.json();
+
+      document.getElementById("loadingSection").style.display = "none";
+
+      if (res.ok && data.success && data.status === "ALLOW") {
+        showAllow(token, data.data);
+      } else {
+        showDeny(data.message || "Invalid or unverified token");
+      }
+    } catch (err) {
+      console.error("Verify error:", err);
+      showDeny();
+    }
+  };
+
+  function showAllow(token, data) {
+    const section = document.getElementById("allowSection");
+    section.style.display = "flex";
+
+    currentInvoiceId = data.invoice_id || null;
+
+    document.getElementById("infoCartId").textContent = data.cart_id || "—";
+    document.getElementById("infoMobile").textContent = data.mobile || "—";
+    document.getElementById("infoAmount").textContent = data.total_paid ? `₹${data.total_paid}` : "—";
+    document.getElementById("tokenDisplay").textContent = token;
+
+    const qrTarget = document.getElementById("exitQR");
+    qrTarget.innerHTML = "";
+
+    new QRCode(qrTarget, {
+      text: token,
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    if (!document.getElementById("consumeExitBtn")) {
+      const btn = document.createElement("button");
+      btn.id = "consumeExitBtn";
+      btn.className = "action-btn primary";
+      btn.textContent = "🚪 Mark Exit Complete";
+      btn.onclick = consumeExitToken;
+
+      const actionRow = document.querySelector(".action-row");
+      actionRow.insertAdjacentElement("afterend", btn);
+      btn.style.marginTop = "12px";
+      btn.style.width = "100%";
+      btn.style.maxWidth = "440px";
+    }
+
+    localStorage.removeItem("sng_qr");
+    localStorage.removeItem("sng_txnid");
+    localStorage.removeItem("sng_amount");
+    localStorage.removeItem("sng_cartid");
+  }
+
+  async function consumeExitToken() {
+    if (!currentToken) return;
+
+    const btn = document.getElementById("consumeExitBtn");
+    const old = btn.textContent;
+
+    try {
+      btn.disabled = true;
+      btn.textContent = "Processing exit...";
+
+      const res = await fetch(`${BASE_URL}/api/consume-exit/${encodeURIComponent(currentToken)}`, {
+        method: "POST"
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        alert(data.message || "Unable to consume exit token.");
+        btn.disabled = false;
+        btn.textContent = old;
+        return;
+      }
+
+      btn.textContent = "✅ Exit Completed";
+      btn.style.background = "#111418";
+      btn.style.color = "#00e676";
+      btn.style.border = "1px solid #00e67655";
+    } catch (err) {
+      alert("Unable to complete exit.");
+      btn.disabled = false;
+      btn.textContent = old;
+    }
+  }
+
+  function showDeny(message = "Invalid or unverified token") {
+    document.getElementById("loadingSection").style.display = "none";
+    document.getElementById("denySection").style.display = "flex";
+
+    const msg = document.querySelector(".status-msg");
+    if (msg) msg.textContent = message;
+  }
+
+  function goBackShopping() {
+    const cartId = document.getElementById("infoCartId").textContent?.trim();
+
+    if (cartId && cartId !== "—") {
+      window.location.href = `cart.html?cart_id=${encodeURIComponent(cartId)}`;
+      return;
+    }
+
+    window.location.href = "cart.html";
+  }
+
+  async function downloadInvoice() {
+    if (!currentInvoiceId) {
+      alert("Invoice not available.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/payment/invoice/${currentInvoiceId}`, {
+        headers: window.Auth.getAuthHeaders()
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || "Failed to download invoice.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${currentInvoiceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Unable to download invoice.");
+    }
+  }
+</script>
+</html>

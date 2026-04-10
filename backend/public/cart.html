@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan-N-Go | Your Cart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0c0f;
+      --surface:   #111418;
+      --border:    #1e2228;
+      --green:     #00e676;
+      --green-dim: #00e67622;
+      --text:      #e8eaed;
+      --muted:     #6b7280;
+      --red:       #ff4444;
+      --mono:      'Space Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 40px;
+    }
+
+    /* ── Header ── */
+    .header {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 15px;
+      color: var(--green);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .cart-id-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .user-name {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      letter-spacing: 1px;
+    }
+
+    .cart-status-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--green);
+      background: var(--green-dim);
+      border: 1px solid #00e67633;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #ff444455;
+      color: #ff6666;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: #ff4444;
+      color: #fff;
+      border-color: #ff4444;
+    }
+
+    /* ── Live indicator ── */
+    .live-bar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 0 6px;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+    .live-text {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ── Item list ── */
+    .items-list {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 0;
+    }
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .item-left { display: flex; align-items: center; gap: 12px; }
+    .item-icon {
+      width: 36px; height: 36px;
+      background: var(--green-dim);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .item-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .item-rfid {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+      letter-spacing: 1px;
+    }
+    .item-price {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green);
+    }
+    .item-remove {
+      margin-left: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #ef4444;
+      transition: 0.2s;
+    }
+
+    .item-remove:hover {
+      transform: scale(1.2);
+    }
+
+    /* ── Total bar ── */
+    .total-bar {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .total-label {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .total-amount {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .total-amount span { color: var(--green); font-size: 14px; margin-right: 2px; }
+
+    /* ── Pay button ── */
+    .pay-btn {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 16px;
+      padding: 17px;
+      background: var(--green);
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .pay-btn:hover   { background: #00ff84; transform: translateY(-1px); }
+    .pay-btn:active  { transform: translateY(0); }
+    .pay-btn:disabled {
+      background: var(--border);
+      color: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+    .pay-btn .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #00000040;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Cart ID input prompt ── */
+    .prompt-box {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .prompt-box h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .prompt-box p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .prompt-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 1px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .prompt-input:focus { border-color: var(--green); }
+    .prompt-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 13px;
+      background: var(--green);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .prompt-btn:hover { background: #00ff84; }
+
+    /* ── Error toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--red);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: transform 0.3s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    .item-count {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">⚡ Scan-N-Go</div>
+      <div class="user-name" id="userName">Guest</div>
+    </div>
+
+    <div class="header-right">
+      <div class="cart-status-badge" id="cartStatusBadge">NOT CONNECTED</div>
+      <div class="cart-id-badge" id="cartIdBadge">NO CART</div>
+      <button class="logout-btn" onclick="Auth.logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="promptSection">
+    <div class="prompt-box">
+      <h2>Enter Cart ID</h2>
+      <p>Type your cart ID to view your items</p>
+      <input class="prompt-input" id="cartIdInput" placeholder="e.g. CART_001" maxlength="20"/>
+      <input class="prompt-input" id="cartPasswordInput" placeholder="Enter cart password" maxlength="20" style="margin-top:10px;"/>
+      <button class="prompt-btn" onclick="loadCart()">View My Cart →</button>
+    </div>
+  </div>
+
+  <div id="cartSection" style="display:none; width:100%; max-width:480px;">
+    <div class="live-bar">
+      <div class="dot"></div>
+      <span class="live-text">Live — updates as items are scanned</span>
+      <span class="item-count" id="itemCount"></span>
+    </div>
+
+    <div class="items-list" id="itemsList"></div>
+
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-icon">🛒</div>
+      <p>No items scanned yet.<br>Pick items — they'll appear here automatically.</p>
+    </div>
+
+    <div class="total-bar">
+      <span class="total-label">Total</span>
+      <span class="total-amount"><span>₹</span><span id="totalAmount">0</span></span>
+    </div>
+
+    <div id="weightWarning" style="display:none; width:100%; max-width:480px; margin-top:12px; background:#ef444415; border:1px solid #ef444455; border-radius:10px; padding:14px 16px; color:#ef4444; font-size:13px;">
+      ⚠️ Weight mismatch detected. Please scan all items properly before payment.
+    </div>
+
+    <button class="pay-btn" id="payBtn" onclick="initiatePayment()">
+      <div class="spinner" id="paySpinner"></div>
+      <span id="payBtnText">Proceed to Pay →</span>
+    </button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script src="/js/auth.js"></script>
+<script>
+  const BASE_URL = window.location.origin;
+  const PRODUCT_ICONS = {
+    Milk: "🥛",
+    Bread: "🍞",
+    Rice: "🍚",
+    Soap: "🧼",
+    Biscuits: "🍪",
+    Juice: "🧃"
+  };
+
+  if (!window.Auth.requireAuth()) {
+    throw new Error("Unauthorized");
+  }
+
+  let cartId = null;
+  let pollTimer = null;
+  let emptyCartTimer = null;
+  let idleCartReleased = false;
+  let lastRenderSignature = "";
+
+  updateCartStatus();
+
+  window.onload = () => {
+    if (!window.Auth.requireAuth()) return;
+
+    const user = window.Auth.getUser();
+    if (user && user.name) {
+      document.getElementById("userName").textContent = user.name;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("cart_id");
+
+    if (id) {
+      cartId = id.toUpperCase();
+      document.getElementById("cartIdInput").value = cartId;
+      startSessionAndShowCart();
+    }
+  };
+
+  window.addEventListener("beforeunload", stopPolling);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      stopPolling();
+    } else if (cartId && document.getElementById("cartSection").style.display !== "none") {
+      startPolling();
+      fetchBill();
+    }
+  });
+
+  function stopPolling() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    if (emptyCartTimer) {
+      clearInterval(emptyCartTimer);
+      emptyCartTimer = null;
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(fetchBill, 3000);
+  }
+
+  async function checkEmptyCartStatus() {
+    if (!cartId || idleCartReleased) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/cart/${cartId}/empty-status`, {
+        headers: window.Auth.getAuthHeaders()
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) return;
+
+      if (data.released) {
+        idleCartReleased = true;
+        stopPolling();
+        showToast("Your cart was released because it stayed empty too long.");
+        setTimeout(() => {
+          window.Auth.logout();
+        }, 1500);
+        return;
+      }
+
+      const status = data.data;
+
+      if (status && status.active && status.message) {
+        showStateBanner(
+          status.stage === 3 ? "error" : "warning",
+          status.message
+        );
+      }
+    } catch (err) {
+      console.log("Empty cart status check failed");
+    }
+  }
+
+  function updateCartStatus(status, paid = false) {
+    const badge = document.getElementById("cartStatusBadge");
+
+    if (paid) {
+      badge.textContent = "PAID";
+      badge.style.color = "#00e676";
+      badge.style.borderColor = "#00e67655";
+      badge.style.background = "#00e67615";
+      return;
+    }
+
+    if (!status) {
+      badge.textContent = "NOT CONNECTED";
+      badge.style.color = "#6b7280";
+      badge.style.borderColor = "#333";
+      badge.style.background = "#111418";
+      return;
+    }
+
+    badge.textContent = status;
+
+    if (status === "ACTIVE") {
+      badge.style.color = "#00e676";
+      badge.style.borderColor = "#00e67655";
+      badge.style.background = "#00e67615";
+    } else if (status === "LOCKED" || status === "PAYMENT_PENDING") {
+      badge.style.color = "#fbbf24";
+      badge.style.borderColor = "#fbbf2455";
+      badge.style.background = "#fbbf2415";
+    } else if (status === "CLOSED") {
+      badge.style.color = "#60a5fa";
+      badge.style.borderColor = "#60a5fa55";
+      badge.style.background = "#60a5fa15";
+    } else {
+      badge.style.color = "#6b7280";
+      badge.style.borderColor = "#333";
+      badge.style.background = "#111418";
+    }
+  }
+
+  function getOrCreateStateBanner() {
+    let banner = document.getElementById("stateBanner");
+
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "stateBanner";
+      banner.style.cssText = `
+        width: 100%;
+        max-width: 480px;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        display: none;
+      `;
+      const totalBar = document.querySelector(".total-bar");
+      totalBar.insertAdjacentElement("beforebegin", banner);
+    }
+
+    return banner;
+  }
+
+  function showStateBanner(type, message) {
+    const banner = getOrCreateStateBanner();
+
+    const styles = {
+      info: {
+        background: "#0ea5e915",
+        border: "1px solid #0ea5e955",
+        color: "#93c5fd",
+      },
+      warning: {
+        background: "#fbbf2415",
+        border: "1px solid #fbbf2455",
+        color: "#fbbf24",
+      },
+      error: {
+        background: "#ef444415",
+        border: "1px solid #ef444455",
+        color: "#ef4444",
+      },
+      success: {
+        background: "#00e67615",
+        border: "1px solid #00e67655",
+        color: "#00e676",
+      },
+    };
+
+    const s = styles[type] || styles.info;
+
+    banner.style.display = "block";
+    banner.style.background = s.background;
+    banner.style.border = s.border;
+    banner.style.color = s.color;
+    banner.textContent = message;
+  }
+
+  function hideStateBanner() {
+    const banner = document.getElementById("stateBanner");
+    if (banner) banner.style.display = "none";
+  }
+
+  function updatePayButtonState(cart) {
+    const payBtn = document.getElementById("payBtn");
+    
+    // 🔥 Replaced cart.items.length with Object.keys()
+    const hasItems = Object.keys(cart.items || {}).length > 0;
+    
+    const isBlocked =
+      cart.weight_status === "MISMATCH" ||
+      cart.locked ||
+      !hasItems ||
+      cart.paid;
+
+    payBtn.disabled = isBlocked;
+  }
+
+  function loadCart() {
+    const input = document.getElementById("cartIdInput").value.trim().toUpperCase();
+    const password = document.getElementById('cartPasswordInput').value.trim();
+
+    if (!input) {
+      showToast("Please enter a Cart ID");
+      return;
+    }
+
+    if (!password) {
+      showToast('Please enter cart password');
+      return;
+    }
+
+    cartId = input;
+    localStorage.setItem("sng_cart_password", password);
+    window.history.replaceState({}, "", `?cart_id=${cartId}`);
+    startSessionAndShowCart();
+  }
+
+  function showCart() {
+    document.getElementById("promptSection").style.display = "none";
+    document.getElementById("cartSection").style.display = "block";
+    document.getElementById("cartIdBadge").textContent = cartId;
+    fetchBill();
+    startPolling();
+    
+    if (emptyCartTimer) clearInterval(emptyCartTimer);
+    emptyCartTimer = setInterval(checkEmptyCartStatus, 10000);
+  }
+
+  async function startSessionAndShowCart() {
+    try {
+      const user = window.Auth.getUser();
+      const cartPassword =
+        document.getElementById("cartPasswordInput").value.trim() ||
+        localStorage.getItem("sng_cart_password") ||
+        "";
+
+      const res = await fetch(`${BASE_URL}/cart/start-session`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          cart_id: cartId,
+          mobile: user.mobile,
+          cart_password: cartPassword
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showToast(data.message || "Failed to start cart session");
+        return;
+      }
+
+      updateCartStatus("ACTIVE");
+      showCart();
+    } catch (err) {
+      showToast("Unable to start session");
+    }
+  }
+
+  async function fetchBill() {
+    if (!cartId) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/cart/get-bill/${cartId}`, {
+        headers: window.Auth.getAuthHeaders(),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        showToast(data.message || "Cart not found");
+        return;
+      }
+
+      const cart = data.data;
+      const weightWarning = document.getElementById("weightWarning");
+
+      updateCartStatus(cart.status, cart.paid);
+
+      if (cart.weight_status === "MISMATCH") {
+        weightWarning.style.display = "block";
+        showStateBanner("error", "Weight mismatch detected. Please scan all items properly before payment.");
+      } else {
+        weightWarning.style.display = "none";
+        hideStateBanner();
+      }
+
+      if (cart.status === "LOCKED") {
+        showLockedState("Cart locked. Complete payment to continue.");
+      } else if (cart.status === "PAYMENT_PENDING") {
+        showLockedState("Payment is pending. Finish payment before cart timeout.");
+      } else {
+        hideLockedState();
+      }
+
+      renderItems(cart.items || {});
+      document.getElementById("totalAmount").textContent = cart.total || 0;
+      updatePayButtonState(cart);
+
+      if (cart.status === "ACTIVE" && !cart.paid) {
+        hideLockedState();
+      }
+
+      if (cart.paid && cart.exit_token) {
+        stopPolling();
+        window.location.href = `exit.html?token=${encodeURIComponent(cart.exit_token)}`;
+      }
+    } catch (err) {
+      showToast("Cannot reach server");
+    }
+  }
+
+  function renderItems(items) {
+    const list = document.getElementById("itemsList");
+    const empty = document.getElementById("emptyState");
+    const count = document.getElementById("itemCount");
+
+    const entries = Object.entries(items || {});
+
+    if (!entries.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+      count.textContent = "";
+      lastRenderSignature = "";
+      return;
+    }
+
+    empty.style.display = "none";
+    count.textContent = `${entries.length} item${entries.length > 1 ? "s" : ""}`;
+
+    const signature = JSON.stringify(
+      entries.map(([itemKey, item]) => ({
+        itemKey,
+        rfid: item.rfid,
+        name: item.name,
+        price: item.price,
+        weight: item.weight,
+      }))
+    );
+
+    if (signature === lastRenderSignature) return;
+    lastRenderSignature = signature;
+
+    list.innerHTML = entries
+      .map(
+        ([itemKey, item], i) => `
+        <div class="item-card">
+          <div class="item-left">
+            <div class="item-icon">${PRODUCT_ICONS[item.name] || "📦"}</div>
+            <div>
+              <div class="item-name">${item.name}</div>
+              <div class="item-rfid">RFID: ${item.rfid || "—"}</div>
+            </div>
+          </div>
+          <div class="item-price">₹${item.price}</div>
+          <div class="item-remove" onclick="removeItem('${itemKey}')" style="cursor: pointer; margin-left: 15px;">❌</div>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  async function removeItem(itemKey) {
+    console.log("CLICKED KEY:", itemKey);
+
+    if (!cartId) return;
+    if (!confirm("Remove this item?")) return; // 👈 ADDED CONFIRMATION CHECK
+
+    try {
+      const res = await fetch(`${BASE_URL}/cart/${cartId}/item/${itemKey}`, {
+        method: "DELETE",
+        headers: window.Auth.getAuthHeaders(),
+      });
+
+      const data = await res.json();
+      console.log("SERVER RESPONSE:", data);
+
+      if (!res.ok || !data.success) {
+        showToast(data.message || "Failed to remove item");
+        return;
+      }
+
+      showToast("Item removed");
+      fetchBill();
+    } catch (err) {
+      console.error(err);
+      showToast("Error removing item");
+    }
+  }
+
+  async function initiatePayment() {
+    if (!cartId) {
+      showToast("No cart selected");
+      return;
+    }
+
+    const confirmPay = confirm("Proceed to payment? Your cart will be locked for checkout.");
+    if (!confirmPay) return;
+
+    const btn = document.getElementById("payBtn");
+    const spinner = document.getElementById("paySpinner");
+    const btnText = document.getElementById("payBtnText");
+
+    btn.disabled = true;
+    spinner.style.display = "block";
+    btnText.textContent = "Locking cart...";
+
+    try {
+      const lockRes = await fetch(`${BASE_URL}/cart/${cartId}/lock`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({}),
+      });
+
+      const lockData = await lockRes.json();
+
+      if (!lockRes.ok || !lockData.success) {
+        showToast(lockData.message || "Failed to lock cart");
+        btn.disabled = false;
+        spinner.style.display = "none";
+        btnText.textContent = "Proceed to Pay →";
+        return;
+      }
+
+      updateCartStatus("LOCKED");
+      btnText.textContent = "Creating order...";
+
+      const orderRes = await fetch(`${BASE_URL}/payment/create-order`, {
+        method: "POST",
+        headers: window.Auth.getAuthHeaders({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ cart_id: cartId }),
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok || !orderData.success) {
+        showToast(orderData.message || "Failed to create order");
+        btn.disabled = false;
+        spinner.style.display = "none";
+        btnText.textContent = "Proceed to Pay →";
+        return;
+      }
+
+      localStorage.setItem("sng_qr", orderData.data.qr_base64);
+      localStorage.setItem("sng_txnid", orderData.data.txnid);
+      localStorage.setItem("sng_amount", orderData.data.amount);
+      localStorage.setItem("sng_cartid", cartId);
+
+      stopPolling();
+      window.location.href = `payment.html?cart_id=${cartId}`;
+    } catch (err) {
+      showToast("Network error — try again");
+      btn.disabled = false;
+      spinner.style.display = "none";
+      btnText.textContent = "Proceed to Pay →";
+    }
+  }
+
+  function showLockedState(message) {
+    const payBtn = document.getElementById("payBtn");
+    payBtn.disabled = true;
+
+    if (!document.getElementById("lockedBanner")) {
+      const banner = document.createElement("div");
+      banner.id = "lockedBanner";
+      banner.style.cssText = `
+        width: 100%;
+        max-width: 480px;
+        background: #fbbf2415;
+        border: 1px solid #fbbf2450;
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+      `;
+      banner.innerHTML = `
+        <span style="font-size:22px;">🔒</span>
+        <div>
+          <div id="lockedBannerTitle" style="font-size:13px;color:#fbbf24;font-weight:600;margin-bottom:3px;">
+            Cart Locked
+          </div>
+          <div id="lockedBannerText" style="font-size:12px;color:#6b7280;">
+            ${message}
+          </div>
+        </div>
+      `;
+      const itemsList = document.getElementById("itemsList");
+      itemsList.insertAdjacentElement("beforebegin", banner);
+    } else {
+      const text = document.getElementById("lockedBannerText");
+      if (text) text.textContent = message;
+    }
+  }
+
+  function hideLockedState() {
+    const banner = document.getElementById("lockedBanner");
+    if (banner) banner.remove();
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 3000);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      .getElementById("cartIdInput")
+      .addEventListener("keydown", (e) => {
+        if (e.key === "Enter") loadCart();
+      });
+  });
+</script>
+</body>
+</html>
